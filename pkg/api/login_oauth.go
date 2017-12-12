@@ -178,6 +178,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			Name:           userInfo.Name,
 			Company:        userInfo.Company,
 			DefaultOrgRole: userInfo.Role,
+			OrgId:          userInfo.OrgId,
 		}
 
 		if err = bus.Dispatch(&cmd); err != nil {

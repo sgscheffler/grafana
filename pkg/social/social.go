@@ -17,6 +17,7 @@ type BasicUserInfo struct {
 	Login   string
 	Company string
 	Role    string
+	OrgId   int64
 }
 
 type SocialConnector interface {
@@ -47,7 +48,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "keycloakrealm" , "grafananet", "grafana_com"}
+	allOauthes := []string{"github", "google", "generic_oauth", "keycloakrealm", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -116,26 +117,27 @@ func NewOAuthService() {
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &GenericOAuth{
-				Config:               &config,
-				allowedDomains:       info.AllowedDomains,
-				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				Config:         &config,
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				teamIds:        sec.Key("team_ids").Ints(","),
 			}
 		}
 
 		//Keycloak
-		if name == "keycloak" {
-			SocialMap["keycloak"] = &SocialKeycloak{
+		if name == "keycloakrealm" {
+			SocialMap["keycloakrealm"] = &Keycloak{
 				Config:               &config,
 				allowedDomains:       info.AllowedDomains,
-				apiUrl:               info.ApiUrl,
+				apiURL:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
-				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				orgId:                sec.Key("org_id").MustInt64(),
 			}
 		}
+
+		//Grafana.com
 		if name == "grafana_com" {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,

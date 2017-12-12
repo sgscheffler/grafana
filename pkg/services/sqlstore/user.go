@@ -33,6 +33,9 @@ func init() {
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
+
+	return -1, nil //steven
+
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
@@ -76,23 +79,28 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(cmd, sess)
-		if err != nil {
-			return err
-		}
 
 		if cmd.Email == "" {
 			cmd.Email = cmd.Login
 		}
 
+		orgId, err := getOrgIdForNewUser(cmd, sess)
+
+		if err != nil {
+			return err
+		}
+
+		print(orgId)
+
 		// create user
 		user := m.User{
-			Email:         cmd.Email,
-			Name:          cmd.Name,
-			Login:         cmd.Login,
-			Company:       cmd.Company,
-			IsAdmin:       cmd.IsAdmin,
-			OrgId:         orgId,
+			Email:   cmd.Email,
+			Name:    cmd.Name,
+			Login:   cmd.Login,
+			Company: cmd.Company,
+			IsAdmin: cmd.IsAdmin,
+			OrgId:   cmd.OrgId,
+
 			EmailVerified: cmd.EmailVerified,
 			Created:       time.Now(),
 			Updated:       time.Now(),
@@ -122,11 +130,12 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 		cmd.Result = user
 
 		// create org user link
+
 		if !cmd.SkipOrgSetup {
 			orgUser := m.OrgUser{
-				OrgId:   orgId,
+				OrgId:   user.OrgId,
 				UserId:  user.Id,
-				Role:    m.ROLE_ADMIN,
+				Role:    m.ROLE_VIEWER,
 				Created: time.Now(),
 				Updated: time.Now(),
 			}
